@@ -39,4 +39,4 @@ The AggregateActor aggregates the views of the result hits, compares to the prev
 
 **TODO** The SearchActor also passes the result to a ConcatenteActor that has been previously created. The ConcatenateActor adds the current hour raw result to a local temp file and pushs it to S3 once it obtains the results of all SearchActors.
 
-![alt text](/docs/diagram.html)
+![alt text](/docs/diagram.png)
