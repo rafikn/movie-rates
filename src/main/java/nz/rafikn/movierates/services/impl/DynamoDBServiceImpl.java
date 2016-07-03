@@ -7,6 +7,7 @@ import com.amazonaws.services.dynamodbv2.document.PutItemOutcome;
 import com.amazonaws.services.dynamodbv2.document.Table;
 import com.amazonaws.services.dynamodbv2.document.spec.GetItemSpec;
 import com.amazonaws.services.dynamodbv2.model.*;
+import com.amazonaws.services.elasticache.model.CacheEngineVersion;
 import nz.rafikn.movierates.model.MovieRecord;
 import nz.rafikn.movierates.services.ConfigurationKeys;
 import nz.rafikn.movierates.services.DynamoDBService;
@@ -30,42 +31,38 @@ public class DynamoDBServiceImpl implements DynamoDBService {
 
 
     private static final Log logger = LogFactory.getLog(DynamoDBServiceImpl.class);
-    private static final DateFormat formatter = new SimpleDateFormat("yyyy-MM-dd");
 
     private final AmazonDynamoDBClient client;
     private final DynamoDB dynamoDB;
-    private final String baseName;
+    private final String tableName;
+    private Table table;
 
     /**
      * Prepare DynamoDB Client.
      *
      * @param dynamoDBEndpoint
-     * @param baseName
+     * @param tableName
      */
     @Inject
     public DynamoDBServiceImpl(@Named(ConfigurationKeys.AWS_DYNAMODB_URL) String dynamoDBEndpoint,
-                               @Named(ConfigurationKeys.AWS_DYNAMODB_TABLE) String baseName) {
-        this.client = new AmazonDynamoDBClient().withEndpoint(dynamoDBEndpoint);
+                               @Named(ConfigurationKeys.AWS_DYNAMODB_TABLE) String tableName) {
+        this.client = new AmazonDynamoDBClient();
         this.dynamoDB = new DynamoDB(client);
-        this.baseName = baseName;
+        this.tableName = tableName;
+        this.table = dynamoDB.getTable(tableName);
     }
 
     /**
      * Create Movies table if it does not exist.
-     *
      */
     @Override
     public void init() {
 
-        String tableName = getCurrentTable();
-        Table table = dynamoDB.getTable(tableName);
         TableDescription description = table.getDescription();
-
-        logger.info("desc " + table);
 
         if (description != null) {
             logger.info("Connected to DynamoDB, found table " + tableName);
-            logger.info("Table Status: " + dynamoDB.getTable(tableName).getDescription().getTableStatus());
+            logger.info("Table Status: " + table.getDescription().getTableStatus());
         } else {
             try {
                 logger.info("Attempting to create table " + tableName + "; please wait...");
@@ -74,8 +71,8 @@ public class DynamoDBServiceImpl implements DynamoDBService {
                                 new KeySchemaElement(MovieRecord.PARTITION_KEY, KeyType.HASH),  //Partition key
                                 new KeySchemaElement(MovieRecord.SORT_KEY, KeyType.RANGE)), //Sort key
                         Arrays.asList(
-                                new AttributeDefinition(MovieRecord.PARTITION_KEY, ScalarAttributeType.N),
-                                new AttributeDefinition(MovieRecord.SORT_KEY, ScalarAttributeType.N)),
+                                new AttributeDefinition(MovieRecord.PARTITION_KEY, ScalarAttributeType.S),
+                                new AttributeDefinition(MovieRecord.SORT_KEY, ScalarAttributeType.S)),
                         new ProvisionedThroughput(10L, 10L));
                 table.waitForActive();
                 logger.info("Success.  Table status: " + table.getDescription().getTableStatus());
@@ -96,19 +93,25 @@ public class DynamoDBServiceImpl implements DynamoDBService {
     @Override
     public void insertRecord(MovieRecord record) {
 
-        String tableName = getCurrentTable();
-        Table table = dynamoDB.getTable(tableName);
+        String partitionKey = record.getTitle();
 
         try {
-            logger.info(Thread.currentThread() + " Adding a new record to " + tableName + ": " + record);
+            logger.info("Adding a new record to " + tableName + ": " + record);
             PutItemOutcome outcome = table.putItem(new Item()
-                    .withPrimaryKey(MovieRecord.PARTITION_KEY, record.getHour(), MovieRecord.SORT_KEY, record.getMovieId())
-                    .withMap("info", record.getMap()));
+                    .withPrimaryKey(MovieRecord.PARTITION_KEY, partitionKey, MovieRecord.SORT_KEY, record.getTimestamp())
+                    .withString("source", record.getSource())
+                    .withString("variable", record.getVariable())
+                    .withString("query_term", record.getSearchTerm())
+                    .withInt("hour", record.getHour())
+                    .withInt("hour_total", record.getHourTotal())
+                    .withInt("delta_last_hour", record.getDeltaLastHour())
+                    .withLong("creation_timestamp", record.getCreationTimestamp())
+            );
 
             logger.debug("PutItem succeeded:\n" + outcome.getPutItemResult());
 
         } catch (Exception e) {
-            logger.error("Unable to add item: " + record);
+            logger.error("Unable to add item: " + record, e);
             System.err.println(e.getMessage());
         }
     }
@@ -116,42 +119,36 @@ public class DynamoDBServiceImpl implements DynamoDBService {
     /**
      * Get aggregated hour views for a movie.
      *
-     * @param hour
-     * @param movieId
+     * @param title
+     * @param timestamp
      * @return
      */
     @Override
-    public int getViewsForHourAndMovie(int hour, int movieId) {
-        Table table = dynamoDB.getTable(getCurrentTable());
+    public int getViewsForHourAndMovie(String title, String timestamp) {
+        String partitionKey = title;
+
 
         GetItemSpec spec = new GetItemSpec()
-                .withPrimaryKey(MovieRecord.PARTITION_KEY, hour, MovieRecord.SORT_KEY, movieId);
+                .withPrimaryKey(MovieRecord.PARTITION_KEY, partitionKey, MovieRecord.SORT_KEY, timestamp);
 
         try {
             Item outcome = table.getItem(spec);
             logger.debug("GetItem succeeded: " + outcome);
 
             if (outcome == null) {
-                logger.debug("Found no previous record for movie: " + movieId + " and hour: " + hour);
+                logger.debug("Found no previous record for movie: " + title + " and timestamp: " + timestamp);
                 return 0;
             }
-            return ((BigDecimal) outcome.getMap("info").get(MovieRecord.HOUR_TOTAL)).intValue();
+            return outcome.getInt(MovieRecord.HOUR_TOTAL);
 
         } catch (Exception e) {
-            logger.error("Unable to read hour_total for item: " + hour + " " + movieId, e);
+            logger.error("Unable to read hour_total for title: " + partitionKey + " timestamp: " + timestamp, e);
         }
 
         return 0;
     }
 
-    /**
-     * Build tableName based on current date.
-     *
-     * @return
-     */
-    private String getCurrentTable() {
-        return baseName + "-" + formatter.format(Calendar.getInstance().getTime());
-    }
+
 
 
 }

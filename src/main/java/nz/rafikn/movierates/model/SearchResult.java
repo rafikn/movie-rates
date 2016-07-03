@@ -40,7 +40,7 @@ public class SearchResult {
 
 
     @JsonIgnore
-    private int plays;
+    private transient int plays;
 
     public int getPlays() {
         if (stats.get("plays") != null) {

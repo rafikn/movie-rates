@@ -13,6 +13,8 @@ import java.sql.*;
 import java.util.ArrayList;
 import java.util.Collection;
 
+import static com.amazonaws.services.elasticbeanstalk.model.ConfigurationOptionValueType.List;
+
 /**
  * Created by rafik on 25/06/16.
  */
@@ -26,6 +28,8 @@ public class MySQLServiceImpl implements MySQLService {
     private final String url;
     private final String username;
     private final String password;
+
+    private Collection<Movie> movies;
 
     /**
      * Inject MySQL config
@@ -50,6 +54,8 @@ public class MySQLServiceImpl implements MySQLService {
      * @return Collection of all movies in the database
      */
     public Collection<Movie> getMovies() {
+
+        if (this.movies != null) return this.movies;
 
         Collection<Movie> movies = new ArrayList<>();
 
@@ -88,6 +94,8 @@ public class MySQLServiceImpl implements MySQLService {
             }//end finally try
         }
 
-        return movies;
+        this.movies = movies;
+
+        return this.movies;
     }
 }

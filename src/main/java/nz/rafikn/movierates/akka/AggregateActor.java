@@ -11,13 +11,14 @@ import nz.rafikn.movierates.services.DynamoDBService;
 import nz.rafikn.movierates.services.VimeoAPIService;
 
 import java.util.Calendar;
+import java.util.Date;
 
 /**
  * Created by rafik on 26/06/16.
  */
 public class AggregateActor extends  AbstractActor {
 
-    private final LoggingAdapter log = Logging.getLogger(context().system(), this);
+    private final LoggingAdapter logger = Logging.getLogger(context().system(), this);
 
     public AggregateActor(DynamoDBService dynamoService, ActorSystem system) {
 
@@ -26,12 +27,15 @@ public class AggregateActor extends  AbstractActor {
 
                     // Aggregate views for search results
                     int hourTotal = VimeoAPIService.aggregate(result);
-                    log.debug("Aggregate results for: " + result.getMovie().getTitle() + " = " + hourTotal);
+                    logger.debug("Aggregate results for: " + result.getMovie().getTitle() + " = " + hourTotal);
 
                     // Get previous hour views and build record
-                    int hour = Calendar.getInstance().get(Calendar.HOUR_OF_DAY);
-                    int lastHourTotal = dynamoService.getViewsForHourAndMovie(hour, result.getMovie().getId());
-                    MovieRecord record = buildRecord(hour, hourTotal, lastHourTotal, result);
+                    String current = DynamoDBService.timestampFormatter.format(Calendar.getInstance().getTime());
+                    String previous = DynamoDBService.timestampFormatter.format(new Date(Calendar.getInstance().getTimeInMillis() - 60*60*1000));
+
+
+                    int delta = hourTotal - dynamoService.getViewsForHourAndMovie(previous, result.getMovie().getTitle());
+                    MovieRecord record = MovieRecord.build(current, hourTotal, delta, result.getMovie());
 
                     // Insert record
                     dynamoService.insertRecord(record);
@@ -39,24 +43,10 @@ public class AggregateActor extends  AbstractActor {
                     // Stop this actor
                     system.stop(this.self());
                 }).
-                matchAny(o -> log.info("received unknown message")).build()
+                matchAny(o -> logger.info("received unknown message")).build()
         );
     }
 
-    private MovieRecord buildRecord(int hour, int hourTotal, int lastHourTotal, RawSearch result) {
 
-
-        MovieRecord record = new MovieRecord();
-
-        record.setMovieId(result.getMovie().getId());
-        record.setMovieTitle(result.getMovie().getTitle());
-        record.setSearchTerm(result.getMovie().getSearchTerm());
-        record.setTimestamp(Calendar.getInstance().getTimeInMillis());
-        record.setHour(hour);
-        record.setHourTotal(hourTotal);
-        record.setDeltaLastHour(hourTotal - lastHourTotal);
-
-        return record;
-    }
 
 }

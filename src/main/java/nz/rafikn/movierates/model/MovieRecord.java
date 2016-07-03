@@ -1,5 +1,7 @@
 package nz.rafikn.movierates.model;
 
+import java.util.Calendar;
+import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -8,33 +10,31 @@ import java.util.Map;
  */
 public class MovieRecord {
 
-    public static final String PARTITION_KEY = "hour";
-    public static final String SORT_KEY = "movie_id";
+    public static final String PARTITION_KEY = "title";
+    public static final String SORT_KEY = "timestamp";
 
-    public static final String SOURCE_KEY = "source";
-    public static final String SOURCE = "vimeo";
-    public static final String VARIABLE_KEY = "variable";
+    public static final String SOURCE = "Vimeo";
     public static final String VARIABLE = "views";
 
     public static final String HOUR_TOTAL= "hour_total";
 
-    private int hour;
+    private String title;
     private int movieId;
+    private String timestamp;
+    private String source;
+    private String variable;
+    private String searchTerm;
+    private int hour;
+    private int hourTotal;
+    private int deltaLastHour;
+    private long creationTimestamp;
 
-    public MovieRecord() {
-        this.map.put(SOURCE_KEY, SOURCE);
-        this.map.put(VARIABLE_KEY, VARIABLE);
+    public String getTitle() {
+        return title;
     }
 
-    private Map<String, Object> map = new HashMap<>();
-
-
-    public int getHour() {
-        return hour;
-    }
-
-    public void setHour(int hour) {
-        this.hour = hour;
+    public void setTitle(String title) {
+        this.title = title;
     }
 
     public int getMovieId() {
@@ -45,73 +45,95 @@ public class MovieRecord {
         this.movieId = movieId;
     }
 
-    public long getTimestamp() {
-        return map.get("timestamp") != null ? (int) map.get("timestamp") : 0l;
+    public String getTimestamp() {
+        return timestamp;
     }
 
-    public void setTimestamp(long timestamp) {
-        map.put("hour", timestamp);
+    public void setTimestamp(String timestamp) {
+        this.timestamp = timestamp;
     }
 
     public String getSource() {
-        return map.get("source") != null ? (String) map.get("source") : "Vimeo";
+        return source;
     }
 
     public void setSource(String source) {
-        map.put("source", source);
-    }
-
-    public String getVariable() {
-        return map.get("variable") != null ? (String) map.get("variable") : "Views";
-    }
-
-    public void setVariable(String variable) {
-        map.put("variable", variable);
-    }
-
-    public int getHourTotal() {
-        return map.get("hour_total") != null ? (int) map.get("hour_total") : 0;
-    }
-
-    public void setHourTotal(int hourTotal) {
-        map.put("hour_total", hourTotal);
-    }
-
-    public int getDeltaLastHour() {
-        return map.get("delta_last_hour") != null ? (int) map.get("delta_last_hour") : 0;
-    }
-
-    public void setDeltaLastHour(int deltaLastHour) {
-        map.put("delta_last_hour", deltaLastHour);
-    }
-
-
-    public String getMovieTitle() {
-        return map.get("movie_title") != null ? (String) map.get("movie_title") : "";
-    }
-
-    public void setMovieTitle(String movieTitle) {
-        map.put("movie_title", movieTitle);
+        this.source = source;
     }
 
     public String getSearchTerm() {
-        return map.get("search_term") != null ? (String) map.get("search_term") : "";
+        return searchTerm;
     }
 
     public void setSearchTerm(String searchTerm) {
-        map.put("search_term", searchTerm);
+        this.searchTerm = searchTerm;
     }
 
-    public Map<String, Object> getMap() {
-        return map;
+    public String getVariable() {
+        return variable;
+    }
+
+    public void setVariable(String variable) {
+        this.variable = variable;
+    }
+
+    public int getHour() {
+        return hour;
+    }
+
+    public void setHour(int hour) {
+        this.hour = hour;
+    }
+
+    public int getHourTotal() {
+        return hourTotal;
+    }
+
+    public void setHourTotal(int hourTotal) {
+        this.hourTotal = hourTotal;
+    }
+
+    public int getDeltaLastHour() {
+        return deltaLastHour;
+    }
+
+    public void setDeltaLastHour(int deltaLastHour) {
+        this.deltaLastHour = deltaLastHour;
+    }
+
+    public long getCreationTimestamp() {
+        return creationTimestamp;
+    }
+
+    public void setCreationTimestamp(long creationTimestamp) {
+        this.creationTimestamp = creationTimestamp;
     }
 
     @Override
     public String toString() {
         return "MovieRecord{" +
-                "hour=" + hour +
-                ", movie_id=" + movieId +
-                ", info={title=" + map.get("movie_title") + "},{hour_total=" + map.get("hour_total") + "},{delta_last_hour=" + map.get("delta_last_hour") + "}" +
+                "title=" + title +
+                ", timestamp=" + timestamp +
+                ", info={{id="+ movieId +"}, {hour_total=" + hourTotal + "}, {delta_last_hour=" + deltaLastHour + "}" +
                 '}';
+    }
+
+
+    public synchronized static MovieRecord build(String timestamp, int hourTotal, int delta, Movie movie) {
+
+        MovieRecord record = new MovieRecord();
+
+        record.setTitle(movie.getTitle());
+        record.setTimestamp(timestamp);
+        record.setMovieId(movie.getId());
+        record.setSearchTerm(movie.getSearchTerm());
+        record.setHour(Calendar.getInstance().get(Calendar.HOUR_OF_DAY));
+        record.setHourTotal(hourTotal);
+        record.setDeltaLastHour(delta);
+        record.setCreationTimestamp(Calendar.getInstance().getTimeInMillis());
+        record.setSource(SOURCE);
+        record.setVariable(VARIABLE);
+
+        return record;
     }
 }

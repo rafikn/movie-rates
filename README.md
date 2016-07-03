@@ -17,7 +17,7 @@ You need to provide a file with configuration properties for mysql, dynamodb and
 
     aws.key.id=
     aws.key.secret=
-    aws.s3.url=
+    aws.s3.bucket=
     aws.dynamodb.url=
     aws.dynamodb.table=
 

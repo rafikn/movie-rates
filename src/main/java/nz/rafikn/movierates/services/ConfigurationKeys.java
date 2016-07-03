@@ -20,7 +20,7 @@ public interface ConfigurationKeys {
      */
     String AWS_KEY_ID = "aws.key.id";
     String AWS_KEY_SECRET = "aws.key.secret";
-    String AWS_S3_URL = "aws.s3.url";
+    String AWS_S3_BUCKET = "aws.s3.bucket";
     String AWS_DYNAMODB_URL = "aws.dynamodb.url";
     String AWS_DYNAMODB_TABLE = "aws.dynamodb.table";
 }

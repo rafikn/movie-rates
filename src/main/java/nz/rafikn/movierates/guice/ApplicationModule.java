@@ -3,7 +3,9 @@ package nz.rafikn.movierates.guice;
 import com.google.inject.AbstractModule;
 import com.google.inject.name.Names;
 import nz.rafikn.movierates.services.ConfigurationKeys;
+import nz.rafikn.movierates.services.UploadService;
 import nz.rafikn.movierates.services.VimeoAPIService;
+import nz.rafikn.movierates.services.impl.MockUploadServiceImpl;
 import nz.rafikn.movierates.services.impl.MockVimeoAPIServiceImpl;
 import org.apache.commons.configuration2.Configuration;
 import org.apache.commons.configuration2.builder.fluent.Configurations;
@@ -50,7 +52,8 @@ public class ApplicationModule extends AbstractModule {
         // Add custom bindings here
         // ...
         // TODO: remove this
-        bind(VimeoAPIService.class).to(MockVimeoAPIServiceImpl.class).asEagerSingleton();
+        //bind(VimeoAPIService.class).to(MockVimeoAPIServiceImpl.class).asEagerSingleton();
+        //bind(UploadService.class).to(MockUploadServiceImpl.class).asEagerSingleton();
     }
 
 
@@ -99,6 +102,10 @@ public class ApplicationModule extends AbstractModule {
         bind(String.class)
                 .annotatedWith(Names.named(ConfigurationKeys.AWS_DYNAMODB_TABLE))
                 .toInstance(config.getString(ConfigurationKeys.AWS_DYNAMODB_TABLE));
+
+        bind(String.class)
+                .annotatedWith(Names.named(ConfigurationKeys.AWS_S3_BUCKET))
+                .toInstance(config.getString(ConfigurationKeys.AWS_S3_BUCKET));
 
         // Set AWS Credentials as system properties for the SDK
         logger.info("Setting AWS Credentials...");
