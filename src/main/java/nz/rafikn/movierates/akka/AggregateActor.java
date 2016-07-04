@@ -34,7 +34,7 @@ public class AggregateActor extends  AbstractActor {
                     String previous = DynamoDBService.timestampFormatter.format(new Date(Calendar.getInstance().getTimeInMillis() - 60*60*1000));
 
 
-                    int delta = hourTotal - dynamoService.getViewsForHourAndMovie(previous, result.getMovie().getTitle());
+                    int delta = hourTotal - dynamoService.getViewsForHourAndMovie(result.getMovie().getTitle(), previous);
                     MovieRecord record = MovieRecord.build(current, hourTotal, delta, result.getMovie());
 
                     // Insert record
