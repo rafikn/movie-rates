@@ -1,9 +1,6 @@
 package nz.rafikn.movierates.model;
 
 import java.util.Calendar;
-import java.util.Date;
-import java.util.HashMap;
-import java.util.Map;
 
 /**
  * Created by rafik on 26/06/16.

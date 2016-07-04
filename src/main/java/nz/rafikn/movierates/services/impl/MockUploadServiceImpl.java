@@ -10,11 +10,6 @@ import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
 import javax.inject.Singleton;
-import java.io.File;
-import java.io.FileWriter;
-import java.io.IOException;
-import java.text.DateFormat;
-import java.text.SimpleDateFormat;
 import java.util.*;
 
 /**
@@ -31,8 +26,6 @@ public class MockUploadServiceImpl implements UploadService {
 
     //private final Map<Integer, Map<Movie, RawSearch>> state = new HashMap<Integer, Map<Movie, RawSearch>>();
     //private int currentState;
-
-    private final Gson gson = new GsonBuilder().create();
 
     @Override
     public void init(Collection<Movie> movies) {

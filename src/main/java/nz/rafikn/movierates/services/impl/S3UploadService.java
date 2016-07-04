@@ -122,7 +122,7 @@ public class S3UploadService implements UploadService{
 
         // TransferManager processes all transfers asynchronously,
         // so this call will return immediately.
-        Upload upload = tm.upload(request);
+        tm.upload(request);
 
 
     }

@@ -1,17 +1,12 @@
 package nz.rafikn.movierates;
 
-import akka.actor.Actor;
 import akka.actor.ActorRef;
 import akka.actor.ActorSystem;
 import akka.actor.Props;
-import akka.routing.RoundRobinPool;
-import com.amazonaws.services.devicefarm.model.Upload;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
-import com.typesafe.config.Config;
 import com.typesafe.config.ConfigFactory;
 import nz.rafikn.movierates.akka.SearchActor;
-import nz.rafikn.movierates.akka.UploadActor;
 import nz.rafikn.movierates.guice.ApplicationModule;
 import nz.rafikn.movierates.model.*;
 import nz.rafikn.movierates.services.DynamoDBService;
@@ -20,10 +15,10 @@ import nz.rafikn.movierates.services.UploadService;
 import nz.rafikn.movierates.services.VimeoAPIService;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
-import scala.concurrent.duration.Duration;
 
 import java.util.Collection;
-import java.util.concurrent.TimeUnit;
+import java.util.Timer;
+import java.util.TimerTask;
 
 
 /**
@@ -100,12 +95,22 @@ public class MovieRates {
         uploader.init(movies);
 
         // Schedule search
-        actorSystem.scheduler().schedule(
-                Duration.create(0, TimeUnit.MILLISECONDS), // Delay
-                Duration.create(60, TimeUnit.MINUTES), // Frequency
-                () -> movies.forEach(movie -> handleMovie(movie)), // Runnable
-                actorSystem.dispatcher() // Akka System
-        );
+//        actorSystem.scheduler().schedule(
+//                Duration.create(0, TimeUnit.MILLISECONDS), // Delay
+//                Duration.create(60, TimeUnit.MINUTES), // Frequency
+//                () -> movies.forEach(movie -> handleMovie(movie)), // Runnable
+//                actorSystem.dispatcher() // Akka System
+//        );
+        
+        Timer timer = new Timer();
+        timer.schedule(
+        		new TimerTask() {
+        			  @Override
+        			  public void run() {
+        				  movies.forEach(movie -> handleMovie(movie));
+        			  }
+				},0, 60 * 60 * 1000);
+        
 
     }
 

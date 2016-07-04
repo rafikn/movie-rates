@@ -7,7 +7,6 @@ import com.amazonaws.services.dynamodbv2.document.PutItemOutcome;
 import com.amazonaws.services.dynamodbv2.document.Table;
 import com.amazonaws.services.dynamodbv2.document.spec.GetItemSpec;
 import com.amazonaws.services.dynamodbv2.model.*;
-import com.amazonaws.services.elasticache.model.CacheEngineVersion;
 import nz.rafikn.movierates.model.MovieRecord;
 import nz.rafikn.movierates.services.ConfigurationKeys;
 import nz.rafikn.movierates.services.DynamoDBService;
@@ -17,11 +16,7 @@ import org.apache.commons.logging.LogFactory;
 import javax.inject.Inject;
 import javax.inject.Named;
 import javax.inject.Singleton;
-import java.math.BigDecimal;
-import java.text.DateFormat;
-import java.text.SimpleDateFormat;
 import java.util.Arrays;
-import java.util.Calendar;
 
 /**
  * Created by rafik on 26/06/16.
